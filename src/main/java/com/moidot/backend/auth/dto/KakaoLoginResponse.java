@@ -40,7 +40,7 @@ public class KakaoLoginResponse {
         res.expiresIn = token.getExpiresIn();
         res.refreshToken = token.getRefreshToken();
         res.refreshTokenExpiresIn = token.getRefreshTokenExpiresIn();
-//        res.scope = token.getScope();
+        res.scope = token.getScope();
 
         res.id = user.getId();
         res.nickname = user.getKakaoAccount().getProfile().getNickname();
