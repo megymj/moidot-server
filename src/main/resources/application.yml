@@ -12,4 +12,4 @@ spring:
     name: backend
   profiles:
     active:
-      - local
+      ${SPRING_PROFILES_ACTIVE:local} # 환경 변수 SPRING_PROFILES_ACTIVE가 설정되어 있으면 해당 값을 사용하고, 없으면 local을 사용
