@@ -3,6 +3,8 @@ package com.moidot.backend.auth.controller;
 import com.moidot.backend.auth.dto.SocialLoginRequest;
 import com.moidot.backend.auth.dto.SocialLoginResponse;
 import com.moidot.backend.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +22,10 @@ public class AuthController {
     }
 
     @PostMapping("/social-login")
-    public ResponseEntity<SocialLoginResponse> socialLogin(@RequestBody SocialLoginRequest request) {
+    public ResponseEntity<SocialLoginResponse> socialLogin(@RequestBody SocialLoginRequest request,
+                                                           HttpServletResponse response) {
         if ("kakao".equalsIgnoreCase(request.getProvider())) {
-            return ResponseEntity.ok(authService.kakaoLogin(request));
+            return ResponseEntity.ok(authService.kakaoLogin(request, response));
         }
 //        else if ("google".equalsIgnoreCase(request.getProvider())) {
 //            return ResponseEntity.ok(authService.googleLogin(request));

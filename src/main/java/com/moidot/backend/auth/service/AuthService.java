@@ -2,23 +2,26 @@ package com.moidot.backend.auth.service;
 
 import com.moidot.backend.auth.dto.SocialLoginRequest;
 import com.moidot.backend.auth.dto.SocialLoginResponse;
+import com.moidot.backend.auth.util.CookieUtil;
 import com.moidot.backend.auth.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
     private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
 
-    public AuthService(JwtUtil jwtUtil) {
+    public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil) {
         this.jwtUtil = jwtUtil;
+        this.cookieUtil = cookieUtil;
+    }
+    public SocialLoginResponse kakaoLogin(SocialLoginRequest request, HttpServletResponse response) {
+        return handleSocialLogin(request, response);
     }
 
-    public SocialLoginResponse kakaoLogin(SocialLoginRequest request) {
-        return handleSocialLogin(request);
-    }
-
-    private SocialLoginResponse handleSocialLogin(SocialLoginRequest request) {
+    private SocialLoginResponse handleSocialLogin(SocialLoginRequest request, HttpServletResponse response) {
 //        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
 //        User user;
 //
@@ -31,15 +34,20 @@ public class AuthService {
 
         String email = request.getEmail();
 
+        // JWT 토큰 생성
         String accessToken = jwtUtil.generateAccessToken(email);
         String refreshToken = jwtUtil.generateRefreshToken(email);
-        System.out.println("accessToken = " + accessToken);
-        System.out.println("refreshToken = " + refreshToken);
 
 //        user.setRefreshToken(refreshToken);
 //        userRepository.save(user);
 
-        return new SocialLoginResponse(email, accessToken, refreshToken);
+        // 1. Authorization Header에 Access Token 추가
+        response.setHeader("Authorization", "Bearer " + accessToken);
+
+        // 2. Refresh Token을 HttpOnly 쿠키로 설정
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
+
+        return new SocialLoginResponse(email);
     }
 
 }
