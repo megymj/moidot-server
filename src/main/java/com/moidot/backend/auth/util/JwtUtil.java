@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -16,7 +17,7 @@ public class JwtUtil {
     private String SECRET_KEY;
     private final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
 
-    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15분
+    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 60; // 60분
     private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 14; // 14일
 
     private SecretKey getSigningKey() {
@@ -38,6 +39,7 @@ public class JwtUtil {
                 .setSubject(email)
                 .setIssuedAt(date)
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setId(UUID.randomUUID().toString()) // 고유 jti 추가
                 .signWith(getSigningKey(), SIGNATURE_ALGORITHM)
                 .compact();
     }
