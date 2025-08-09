@@ -4,9 +4,13 @@ import com.moidot.backend.auth.dto.SocialLoginRequest;
 import com.moidot.backend.auth.dto.SocialLoginResponse;
 import com.moidot.backend.auth.util.CookieUtil;
 import com.moidot.backend.auth.util.JwtUtil;
+import com.moidot.backend.auth.verify.SocialProvider;
+import com.moidot.backend.auth.verify.VerifiedIdentity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -14,16 +18,50 @@ public class AuthService {
 
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
+    private final SocialVerifyService socialVerifyService;
 
-    public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil) {
+    public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil, SocialVerifyService socialVerifyService) {
         this.jwtUtil = jwtUtil;
         this.cookieUtil = cookieUtil;
-    }
-    public SocialLoginResponse kakaoLogin(SocialLoginRequest request, HttpServletResponse response) {
-        return handleSocialLogin(request, response);
+        this.socialVerifyService = socialVerifyService;
     }
 
-    private SocialLoginResponse handleSocialLogin(SocialLoginRequest request, HttpServletResponse response) {
+    public SocialLoginResponse socialLogin(SocialLoginRequest request, HttpServletResponse response) {
+        // 1. accessToken 검증
+        VerifiedIdentity verifiedIdentity = verifySocialInfo(request);
+
+        // 2. 소셜 로그인 처리
+        return handleSocialLogin(verifiedIdentity, response);
+    }
+
+    // 1. accessToken 검증
+    public VerifiedIdentity verifySocialInfo(SocialLoginRequest request) {
+        // 문자열 - enum 반환
+        SocialProvider providerEnum = resolveProvider(request.getProvider());
+
+        // 여기서 실제 서버 검증 수행 (카카오/구글/네이버 중 자동 선택)
+        VerifiedIdentity v = socialVerifyService.verify(providerEnum, request.getAccessToken());
+
+        log.info("Verified provider={}, providerUserId={}, email={}", v.provider(), v.providerUserId(), v.email());
+        return v;
+    }
+
+    /**
+     * 문자열 입력을 안전하게 SocialProvider로 변환한다.
+     * - 대소문자 무시
+     * - 앞뒤 공백 제거
+     * - 매칭 실패 시 BAD_REQUEST 예외
+     */
+    private SocialProvider resolveProvider(String provider) {
+        try {
+            // 대문자 변환
+            return SocialProvider.valueOf(provider.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported provider: " + provider);
+        }
+    }
+
+    private SocialLoginResponse handleSocialLogin(VerifiedIdentity verifiedIdentity, HttpServletResponse response) {
 //        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
 //        User user;
 //
@@ -34,7 +72,7 @@ public class AuthService {
 //            userRepository.save(user);
 //        }
 
-        String email = request.getEmail();
+        String email = verifiedIdentity.email();
 
         // JWT 토큰 생성
         String accessToken = jwtUtil.generateAccessToken(email);

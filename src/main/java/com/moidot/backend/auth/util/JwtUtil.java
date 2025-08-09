@@ -35,13 +35,14 @@ public class JwtUtil {
     }
 
     private String generateToken(String email, long expiration) {
-        Date date = new Date();
+        Date now = new Date();
 
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(date)
+                .setSubject(email)                  // sub: 토큰 주체(유저 이메일)
+                .setAudience("web")                  // aud: 토큰 사용 대상(여기서는 'web')
+                .setIssuedAt(now)                   // iat: 발급 시각
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .setId(UUID.randomUUID().toString()) // 고유 jti 추가
+                .setId(UUID.randomUUID().toString()) // jti: 토큰 고유 ID(재사용 방지용)
                 .signWith(getSigningKey(), SIGNATURE_ALGORITHM)
                 .compact();
     }

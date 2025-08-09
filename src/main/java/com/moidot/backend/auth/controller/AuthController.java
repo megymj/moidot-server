@@ -23,12 +23,9 @@ public class AuthController {
     @PostMapping("/social-login")
     public ResponseEntity<SocialLoginResponse> socialLogin(@RequestBody SocialLoginRequest request,
                                                            HttpServletResponse response) {
-        if ("kakao".equalsIgnoreCase(request.getProvider())) {
-            return ResponseEntity.ok(authService.kakaoLogin(request, response));
-        }
-//        else if ("google".equalsIgnoreCase(request.getProvider())) {
-//            return ResponseEntity.ok(authService.googleLogin(request));
-//        }
-        throw new IllegalArgumentException("Unsupported provider: " + request.getProvider());
+
+        return ResponseEntity.ok(authService.socialLogin(request, response));
+
+//        throw new IllegalArgumentException("Unsupported provider: " + request.getProvider());
     }
 }
