@@ -1,6 +1,6 @@
 # Default
 server:
-  port: 80
+  port: 8080
   servlet:
     encoding:
       charset: UTF-8
