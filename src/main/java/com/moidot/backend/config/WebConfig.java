@@ -14,7 +14,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "https://www.moidot.com",    // 운영 프론트 주소
                         "http://localhost:3000"     // 개발 프론트 주소
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("*")
                 .allowCredentials(true); // 쿠키 허용
     }

@@ -27,6 +27,7 @@ public class CookieUtil {
                 .secure(true) // 개발환경 HTTP에선 무조건 false
                 .path("/")
                 .maxAge(Duration.ofDays(14))
+                .domain(".moidot.com") 
                 .sameSite("None") // 로컬 개발환경에 적합: TODO.. 추후 학습 필요
                 .build();
 
