@@ -24,10 +24,10 @@ public class CookieUtil {
 
         ResponseCookie cookie = ResponseCookie.from("m_refreshToken", refreshToken)
                 .httpOnly(true) // 개발환경에서는 false, 실제 서비스에서는 true로 변경 필요
-                .secure(false) // 개발환경 HTTP에선 무조건 false
+                .secure(true) // 개발환경 HTTP에선 무조건 false
                 .path("/")
                 .maxAge(Duration.ofDays(14))
-                .sameSite("Lax") // 로컬 개발환경에 적합: TODO.. 추후 학습 필요
+                .sameSite("None") // 로컬 개발환경에 적합: TODO.. 추후 학습 필요
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
