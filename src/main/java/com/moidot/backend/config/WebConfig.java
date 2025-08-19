@@ -10,9 +10,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins(
-                        "https://www.moidot.com",    // 운영 프론트 주소
-                        "http://localhost:3000"     // 개발 프론트 주소
+                .allowedOriginPatterns(
+                        "https://www.moidot.com",      // 운영 프론트
+                        "http://localhost:3000",       // 로컬 개발
+                        "https://moidot.vercel.app"   // Vercel 프로덕션(루트)
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("*")
