@@ -28,6 +28,7 @@ public class SocialVerifyService {
     public VerifiedIdentity verify(SocialProvider provider, String accessToken) {
         SocialVerifier v = byProvider.get(provider);
         if (v == null) {
+            log.warn("Unsupported provider requested: {}", provider);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported provider: " + provider);
         }
         return v.verify(accessToken);
