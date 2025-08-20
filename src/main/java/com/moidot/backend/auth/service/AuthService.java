@@ -6,11 +6,16 @@ import com.moidot.backend.auth.util.CookieUtil;
 import com.moidot.backend.auth.util.JwtUtil;
 import com.moidot.backend.auth.verify.SocialProvider;
 import com.moidot.backend.auth.verify.VerifiedIdentity;
+import com.moidot.backend.user.entity.User;
+import com.moidot.backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+import java.util.Date;
 
 @Slf4j
 @Service
@@ -19,11 +24,14 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final CookieUtil cookieUtil;
     private final SocialVerifyService socialVerifyService;
+    private final UserRepository userRepository;
 
-    public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil, SocialVerifyService socialVerifyService) {
+    public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil,
+                       SocialVerifyService socialVerifyService, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
         this.cookieUtil = cookieUtil;
         this.socialVerifyService = socialVerifyService;
+        this.userRepository = userRepository;
     }
 
     public SocialLoginResponse socialLogin(SocialLoginRequest request, HttpServletResponse response) {
@@ -62,17 +70,21 @@ public class AuthService {
     }
 
     private SocialLoginResponse handleSocialLogin(VerifiedIdentity verifiedIdentity, HttpServletResponse response) {
-//        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
-//        User user;
-//
-//        if (userOptional.isPresent()) {
-//            user = userOptional.get();
-//        } else {
-//            user = new User(request.getEmail(), request.getNickname(), request.getProfileImage());
-//            userRepository.save(user);
-//        }
+        User user = userRepository.findUserByEmail(verifiedIdentity.email());
+        if (user == null) {
+            // 새로운 사용자 생성
+            user = new User(verifiedIdentity.email(), null, Instant.now(), null);
+            userRepository.save(user);
+        } else {
+            // 기존 사용자 업데이트 (예: 마지막 로그인 시간 갱신 등)
+            Instant current = Instant.now();
 
-        String email = verifiedIdentity.email();
+            user.setLastLoginAt(current);
+            userRepository.save(user);
+            log.info("user {} " + user.toString());
+        }
+
+        String email = user.getEmail();
 
         // JWT 토큰 생성
         String accessToken = jwtUtil.generateAccessToken(email);

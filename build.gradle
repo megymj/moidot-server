@@ -25,7 +25,7 @@ repositories {
 
 dependencies {
     // Spring Boot
-//    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Lombok
@@ -38,7 +38,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 처리 라이브러리
 
     // Database
-//    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
