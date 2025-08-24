@@ -70,21 +70,22 @@ public class AuthService {
     private SocialLoginResponse handleSocialLogin(VerifiedIdentity verifiedIdentity, HttpServletResponse response) {
         User user = userRepository.findUserByProviderUserIdAndProvider(
                 verifiedIdentity.providerUserId(), verifiedIdentity.provider());
+
+        Instant current = Instant.now();
         if (user == null) {
             // 새로운 사용자 생성
             user = new User(verifiedIdentity.providerUserId(), verifiedIdentity.provider(),
-                    verifiedIdentity.email(), null, Instant.now(), null);
+                    verifiedIdentity.email(), null, current, null);
             userRepository.save(user);
 
-            log.info("New user created: {}" + user.toString());
+            log.info("New user created: {}", user.toString());
 
         } else {
             // 기존 사용자 업데이트 (마지막 로그인 시간 갱신)
-            Instant current = Instant.now();
 
             user.setLastLoginAt(current);
             userRepository.save(user);
-            log.info("login user {} " + user.toString());
+            log.info("login user {} ", user.toString());
         }
 
         String email = user.getEmail();
