@@ -2,6 +2,7 @@ package com.moidot.backend.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -11,11 +12,13 @@ import jakarta.persistence.Table;
 import lombok.ToString;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
 @ToString
 @Entity
+@EntityListeners(AuditingEntityListener.class) // JPA Auditing 기능 활성화
 @Table(name = "users")
 public class User {
 
@@ -23,7 +26,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true) // CITEXT 쓰면 DB 마이그에서 타입만 바꾸면 됨
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Enumerated(EnumType.STRING)
