@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.Date;
 
 @Slf4j
 @Service
@@ -35,14 +34,13 @@ public class AuthService {
     }
 
     public SocialLoginResponse socialLogin(SocialLoginRequest request, HttpServletResponse response) {
-        // 1. accessToken 검증
+        // 1. Social Login access token 검증
         VerifiedIdentity verifiedIdentity = verifySocialInfo(request);
 
         // 2. 소셜 로그인 처리
         return handleSocialLogin(verifiedIdentity, response);
     }
 
-    // 1. accessToken 검증
     public VerifiedIdentity verifySocialInfo(SocialLoginRequest request) {
         // 문자열 - enum 반환
         SocialProvider providerEnum = resolveProvider(request.getProvider());
@@ -70,18 +68,23 @@ public class AuthService {
     }
 
     private SocialLoginResponse handleSocialLogin(VerifiedIdentity verifiedIdentity, HttpServletResponse response) {
-        User user = userRepository.findUserByEmail(verifiedIdentity.email());
+        User user = userRepository.findUserByProviderUserIdAndProvider(
+                verifiedIdentity.providerUserId(), verifiedIdentity.provider());
         if (user == null) {
             // 새로운 사용자 생성
-            user = new User(verifiedIdentity.email(), null, Instant.now(), null);
+            user = new User(verifiedIdentity.providerUserId(), verifiedIdentity.provider(),
+                    verifiedIdentity.email(), null, Instant.now(), null);
             userRepository.save(user);
+
+            log.info("New user created: {}" + user.toString());
+
         } else {
-            // 기존 사용자 업데이트 (예: 마지막 로그인 시간 갱신 등)
+            // 기존 사용자 업데이트 (마지막 로그인 시간 갱신)
             Instant current = Instant.now();
 
             user.setLastLoginAt(current);
             userRepository.save(user);
-            log.info("user {} " + user.toString());
+            log.info("login user {} " + user.toString());
         }
 
         String email = user.getEmail();
@@ -89,9 +92,6 @@ public class AuthService {
         // JWT 토큰 생성
         String accessToken = jwtUtil.generateAccessToken(email);
         String refreshToken = jwtUtil.generateRefreshToken(email);
-
-//        user.setRefreshToken(refreshToken);
-//        userRepository.save(user);
 
         // 1. Authorization Header에 Access Token 추가
         response.setHeader("Authorization", "Bearer " + accessToken);

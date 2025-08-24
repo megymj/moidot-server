@@ -1,5 +1,6 @@
 package com.moidot.backend.user.entity;
 
+import com.moidot.backend.auth.verify.SocialProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -26,6 +27,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "provider_user_id", nullable = false)
+    private String providerUserId;
+
+    // KAKAO, GOOGLE, NAVER 등
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SocialProvider provider;
+
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -44,7 +53,13 @@ public class User {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
-    public User(String email, Instant lastLoginAt, Instant createdAt, Instant updatedAt) {
+    public User (
+            String providerUserId,
+            SocialProvider provider,
+            String email,
+            Instant lastLoginAt, Instant createdAt, Instant updatedAt) {
+        this.providerUserId = providerUserId;
+        this.provider = provider;
         this.email = email;
         this.lastLoginAt = lastLoginAt;
         this.createdAt = createdAt;
