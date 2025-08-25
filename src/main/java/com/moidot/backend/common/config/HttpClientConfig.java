@@ -1,4 +1,4 @@
-package com.moidot.backend.config;
+package com.moidot.backend.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
