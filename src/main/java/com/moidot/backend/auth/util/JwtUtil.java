@@ -37,14 +37,14 @@ public class JwtUtil {
 
 
     public String generateAccessToken(String providerUserId) {
-        return generateToken(providerUserId, accessTtl, /*withJti*/ false);
+        return buildJwt(providerUserId, accessTtl, /*withJti*/ false);
     }
 
     public String generateRefreshToken(String providerUserId) {
-        return generateToken(providerUserId, refreshTtl, /*withJti*/ true);
+        return buildJwt(providerUserId, refreshTtl, /*withJti*/ true);
     }
 
-    private String generateToken(String providerUserId, Duration ttl, boolean withJti) {
+    private String buildJwt(String providerUserId, Duration ttl, boolean withJti) {
         Instant now = Instant.now();
 
         var b = Jwts.builder()
@@ -54,9 +54,7 @@ public class JwtUtil {
                 .setExpiration(Date.from(now.plus(ttl)))         // exp
                 .signWith(signingKey, SIGNATURE_ALGORITHM);
 
-        if (withJti) {
-            b.setId(UUID.randomUUID().toString());             // jti: 토큰 고유 ID(재사용 방지용)
-        }
+        if (withJti) b.setId(UUID.randomUUID().toString());             // jti: 토큰 고유 ID(재사용 방지용)
 
         return b.compact();
     }

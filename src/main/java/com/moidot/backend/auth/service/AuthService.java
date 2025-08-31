@@ -98,6 +98,7 @@ public class AuthService {
 
         // 1. Authorization Header에 Access Token 추가
         response.setHeader("Authorization", "Bearer " + accessToken);
+        log.info("accessToken value = {}", accessToken);
 
         // 2. Refresh Token을 HttpOnly 쿠키로 설정
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
