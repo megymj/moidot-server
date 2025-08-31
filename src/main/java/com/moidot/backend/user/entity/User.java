@@ -74,6 +74,14 @@ public class User {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public String getProviderUserId() {
+        return providerUserId;
+    }
+
+    public SocialProvider getProvider() {
+        return provider;
+    }
+
     public String getEmail() {
         return email;
     }

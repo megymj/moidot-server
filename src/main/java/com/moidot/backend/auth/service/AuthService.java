@@ -88,11 +88,13 @@ public class AuthService {
             log.info("login user {} ", user.toString());
         }
 
+        String providerUserId = user.getProviderUserId();
+        SocialProvider provider = user.getProvider();
         String email = user.getEmail();
 
         // JWT 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(email);
-        String refreshToken = jwtUtil.generateRefreshToken(email);
+        String accessToken = jwtUtil.generateAccessToken(providerUserId);
+        String refreshToken = jwtUtil.generateRefreshToken(providerUserId);
 
         // 1. Authorization Header에 Access Token 추가
         response.setHeader("Authorization", "Bearer " + accessToken);
@@ -100,7 +102,7 @@ public class AuthService {
         // 2. Refresh Token을 HttpOnly 쿠키로 설정
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
-        return new SocialLoginResponse(email);
+        return new SocialLoginResponse(provider, email);
     }
 
 }

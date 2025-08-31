@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -16,36 +17,48 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret.key}")
-    private String SECRET_KEY;
     private final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+    private final SecretKey signingKey;
+    private final String issuer;
+    private final Duration accessTtl;
+    private final Duration refreshTtl;
 
-    private static final long ACCESS_TOKEN_EXPIRATION  = Duration.ofMinutes(15).toMillis();
-    private static final long REFRESH_TOKEN_EXPIRATION = Duration.ofDays(14).toMillis();
-
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes()); // 최소 256bit(32바이트) 필요
+    public JwtUtil(
+            @Value("${jwt.secret.key}") String secretKey,
+            @Value("${jwt.issuer}") String issuer,
+            @Value("${jwt.access-ttl-minutes:15}") long accessTtlMinutes,   // ${propertyName:defaultValue}
+            @Value("${jwt.refresh-ttl-days:14}") long refreshTtlDays
+    ) {
+        this.signingKey = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.issuer = issuer;
+        this.accessTtl = Duration.ofMinutes(accessTtlMinutes);
+        this.refreshTtl = Duration.ofDays(refreshTtlDays);
     }
 
-    public String generateAccessToken(String email) {
-        return generateToken(email, ACCESS_TOKEN_EXPIRATION);
+
+    public String generateAccessToken(String providerUserId) {
+        return generateToken(providerUserId, accessTtl, /*withJti*/ false);
     }
 
-    public String generateRefreshToken(String email) {
-        return generateToken(email, REFRESH_TOKEN_EXPIRATION);
+    public String generateRefreshToken(String providerUserId) {
+        return generateToken(providerUserId, refreshTtl, /*withJti*/ true);
     }
 
-    private String generateToken(String email, long expiration) {
-        Date now = new Date();
+    private String generateToken(String providerUserId, Duration ttl, boolean withJti) {
+        Instant now = Instant.now();
 
-        return Jwts.builder()
-                .setSubject(email)                  // sub: 토큰 주체(유저 이메일)
-                .setAudience("web")                  // aud: 토큰 사용 대상(여기서는 'web')
-                .setIssuedAt(now)                   // iat: 발급 시각
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .setId(UUID.randomUUID().toString()) // jti: 토큰 고유 ID(재사용 방지용)
-                .signWith(getSigningKey(), SIGNATURE_ALGORITHM)
-                .compact();
+        var b = Jwts.builder()
+                .setSubject(providerUserId)                               // sub: 토큰 주체(유저 이메일)
+                .setIssuer(issuer)                               // iss
+                .setIssuedAt(Date.from(now))                     // iat: 발급 시각
+                .setExpiration(Date.from(now.plus(ttl)))         // exp
+                .signWith(signingKey, SIGNATURE_ALGORITHM);
+
+        if (withJti) {
+            b.setId(UUID.randomUUID().toString());             // jti: 토큰 고유 ID(재사용 방지용)
+        }
+
+        return b.compact();
     }
 }
 
