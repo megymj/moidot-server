@@ -12,7 +12,7 @@
       - ${LOG_FILE}로 참조할 수 있습니다.
       - 애플리케이션 실행 경로 기준으로 application.log 파일에 기록됩니다.
     -->
-    <property name="LOG_FILE" value="application.log"/>
+    <property name="LOG_FILE" value="logs/application.log"/>
 
     <!-- ===================== 콘솔(Appender) 설정 ===================== -->
     <!--
