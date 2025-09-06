@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback 메인 설정 파일.
+  - 콘솔과 파일로 동시에 로그를 출력합니다.
+  - 파일 로그는 시간 기반(TimeBased)으로 굴려(rolling) gzip 압축하여 보관합니다.
+-->
+
+<configuration>
+
+    <!--
+      property: 설정 값(변수) 정의
+      - ${LOG_FILE}로 참조할 수 있습니다.
+      - 애플리케이션 실행 경로 기준으로 application.log 파일에 기록됩니다.
+    -->
+    <property name="LOG_FILE" value="application.log"/>
+
+    <!-- ===================== 콘솔(Appender) 설정 ===================== -->
+    <!--
+      ConsoleAppender
+      - 표준 출력(stdout)으로 로그를 내보냅니다.
+      - 로컬 개발/디버깅 시 바로 확인하기 좋습니다.
+    -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!--
+          encoder: 로그 한 줄의 포맷 정의
+          - %d{yyyy-MM-dd HH:mm:ss} : 로그 시각 (예: 2025-09-06 14:33:21)
+          - %-5level                 : 로그 레벨 좌측 정렬 5칸 (INFO, WARN, ERROR 등)
+          - [%thread]                : 로그를 남긴 스레드명
+          - %logger{36}              : 로거 이름을 최대 36자까지 표시 (패키지 포함)
+          - %msg                     : 실제 로그 메시지
+          - %n                       : 개행(new line)
+        -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} dev %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== 파일(Appender) 설정 ===================== -->
+    <!--
+      RollingFileAppender
+      - 파일에 로그를 기록하면서 정책에 따라 파일을 순환(rollover) 보관합니다.
+    -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--
+          현재 활성 로그 파일 경로
+          - 여기로 실시간 로그가 append되고, 롤링 시 아래 패턴의 이름으로 교체/보관됩니다.
+        -->
+        <file>${LOG_FILE}</file>
+
+        <!--
+          rollingPolicy: 파일 교체/보관 정책
+          - TimeBasedRollingPolicy: 시각 기준으로 파일을 굴립니다.
+            * fileNamePattern: 보관 파일명 패턴
+              - application.%d{yyyy-MM-dd_HH-mm}.log.gz
+              - 분 단위까지 포함하여 굴림(예: application.2025-09-06_14-30.log.gz)
+              - ".gz"로 자동 압축 저장(용량 최소화를 위해)
+            * maxHistory: 보관 이력 개수(또는 기간)
+              - 여기서는 30 (가장 최근 30개 보관, 그 이전은 삭제)
+        -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>application.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+
+        <!--
+          파일 로그 라인 포맷
+          - 콘솔과 동일한 패턴을 사용합니다.
+        -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== 루트 로거 설정 ===================== -->
+    <!--
+      root: 기본 로거
+      - level="info": INFO 이상 레벨만 출력 (DEBUG/TRACE는 제외)
+      - appender-ref: 어떤 Appender로 보낼지 지정 (콘솔 + 파일 동시 출력)
+    -->
+    <root level="info">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <!--
+      참고:
+      - DEBUG 로그까지 보고 싶으면 <root level="debug"> 로 조정하세요.
+      - 운영 환경에서 콘솔 출력이 불필요하면 CONSOLE 참조를 제거할 수 있습니다.
+      - 파일 보관 기간/개수를 늘리려면 maxHistory 값을 조정하세요.
+    -->
+</configuration>
