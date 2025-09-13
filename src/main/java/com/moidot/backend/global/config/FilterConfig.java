@@ -1,7 +1,7 @@
 package com.moidot.backend.global.config;
 
 import com.moidot.backend.auth.filter.JwtAuthenticationFilter;
-import com.moidot.backend.auth.util.JwtAccessTokenVerifier;
+import com.moidot.backend.auth.util.JwtUtil;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +11,8 @@ public class FilterConfig {
 
     // 1) 필터 자체를 빈으로 등록
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtAccessTokenVerifier verifier) {
-        return new JwtAuthenticationFilter(verifier);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
+        return new JwtAuthenticationFilter(jwtUtil);
     }
 
     // 2) 등록기 빈을 만들 때, 위 필터 빈을 "파라미터로" 자동 주입

@@ -1,6 +1,6 @@
 package com.moidot.backend.auth.filter;
 
-import com.moidot.backend.auth.util.JwtAccessTokenVerifier;
+import com.moidot.backend.auth.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +15,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtAccessTokenVerifier jwtAccessTokenVerifier;
+    private final JwtUtil jwtutil;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest req) {
@@ -26,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && req.getHeader("Access-Control-Request-Method") != null;
 
         return preflight
-                || uri.startsWith("/api/auth/")
+                || uri.startsWith("/api/auth/")     // 로그인 제외
                 || uri.startsWith("/actuator/")
                 || uri.startsWith("/docs/");
     }
@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = auth.substring(7).trim();
         try {
-            var claims = jwtAccessTokenVerifier.verify(token); // 서명/exp/iss/aud 검증
+            var claims = jwtutil.verifyAccess(token); // 서명/exp/iss/aud 검증
 
             log.info("claims : {}", claims.toString());
 
@@ -83,5 +83,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         res.getWriter().write(body);
     }
 
-    public record AuthContext(String userId, String email) {}
 }
