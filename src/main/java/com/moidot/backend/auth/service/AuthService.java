@@ -1,7 +1,9 @@
 package com.moidot.backend.auth.service;
 
+import com.moidot.backend.auth.domain.RefreshToken;
 import com.moidot.backend.auth.dto.SocialLoginRequest;
 import com.moidot.backend.auth.dto.SocialLoginResponse;
+import com.moidot.backend.auth.repository.RefreshTokenRepository;
 import com.moidot.backend.auth.util.CookieUtil;
 import com.moidot.backend.auth.util.JwtUtil;
 import com.moidot.backend.auth.verify.SocialProvider;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -25,13 +28,16 @@ public class AuthService {
     private final CookieUtil cookieUtil;
     private final SocialVerifyService socialVerifyService;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthService(JwtUtil jwtUtil, CookieUtil cookieUtil,
-                       SocialVerifyService socialVerifyService, UserRepository userRepository) {
+                       SocialVerifyService socialVerifyService, UserRepository userRepository,
+                       RefreshTokenRepository refreshTokenRepository) {
         this.jwtUtil = jwtUtil;
         this.cookieUtil = cookieUtil;
         this.socialVerifyService = socialVerifyService;
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public SocialLoginResponse socialLogin(SocialLoginRequest request, HttpServletResponse response) {
@@ -100,6 +106,11 @@ public class AuthService {
         // JWT 토큰 발급
         String accessToken = jwtUtil.generateAccessToken(userId, sid);
         String refreshToken = jwtUtil.generateRefreshToken(userId, sid);
+
+        // 생성된 RefreshToken 저장
+        RefreshToken dbRefreshToken = new RefreshToken(userId, sid, refreshToken, current.plus(Duration.ofDays(14)), current);
+        refreshTokenRepository.save(dbRefreshToken);
+
 
         // Authorization Header에 Access Token 추가
         response.setHeader("Authorization", "Bearer " + accessToken);
