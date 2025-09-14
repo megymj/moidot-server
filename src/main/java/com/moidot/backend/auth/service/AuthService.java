@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -79,7 +80,6 @@ public class AuthService {
             userRepository.save(user);
 
             log.info("New user created: {}", user.toString());
-
         } else {
             // 기존 사용자 업데이트 (마지막 로그인 시간 갱신)
 
@@ -88,22 +88,40 @@ public class AuthService {
             log.info("login user {} ", user.toString());
         }
 
-        String providerUserId = user.getProviderUserId();
+        // 1. 사용자 식별/생성
+        Long userId = user.getId();
+
+        // 2. 세션 생성
+        String sid = UUID.randomUUID().toString();
+
         SocialProvider provider = user.getProvider();
         String email = user.getEmail();
 
-        // JWT 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(providerUserId);
-        String refreshToken = jwtUtil.generateRefreshToken(providerUserId);
+        // JWT 토큰 발급
+        String accessToken = jwtUtil.generateAccessToken(userId, sid);
+        String refreshToken = jwtUtil.generateRefreshToken(userId, sid);
 
-        // 1. Authorization Header에 Access Token 추가
+        // Authorization Header에 Access Token 추가
         response.setHeader("Authorization", "Bearer " + accessToken);
         log.info("accessToken value = {}", accessToken);
 
-        // 2. Refresh Token을 HttpOnly 쿠키로 설정
+        // Refresh Token을 HttpOnly 쿠키로 설정
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
         return new SocialLoginResponse(provider, email);
+    }
+
+    public String createRefreshToken(String refreshToken) {
+
+        // 1. refreshToken parsing해서 id 정보 가져오기
+
+        // 2. id정보 기반으로 refreshToken 재생성
+//        jwtUtil.generateRefreshToken()
+
+        // 3. 전달
+
+        return null;
+
     }
 
 }

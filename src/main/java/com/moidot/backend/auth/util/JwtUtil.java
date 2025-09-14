@@ -54,22 +54,23 @@ public class JwtUtil {
     }
 
     /* ===== 발급 ===== */
-    public String generateAccessToken(String providerUserId) {
-        return buildJwt(providerUserId, accessTtl, /*withJti*/ false);
+    public String generateAccessToken(Long userId, String sid) {
+        return buildJwt(userId, accessTtl, /*withJti*/ false, sid);
     }
 
-    public String generateRefreshToken(String providerUserId) {
-        return buildJwt(providerUserId, refreshTtl, /*withJti*/ true);
+    public String generateRefreshToken(Long userId, String sid) {
+        return buildJwt(userId, refreshTtl, /*withJti*/ true, sid);
     }
 
-    private String buildJwt(String providerUserId, Duration ttl, boolean withJti) {
+    private String buildJwt(Long userId, Duration ttl, boolean withJti, String sid) {
         Instant now = Instant.now();
 
         var b = Jwts.builder()
-                .setSubject(providerUserId)                               // sub: 토큰 주체(유저 이메일)
+                .setSubject(String.valueOf(userId))                               // sub: 토큰 주체(유저 정보)
                 .setIssuer(issuer)                               // iss
                 .setIssuedAt(Date.from(now))                     // iat: 발급 시각
                 .setExpiration(Date.from(now.plus(ttl)))         // exp
+                .claim("sid", sid)                          // 세션 식별자
                 .signWith(signingKey, SIGNATURE_ALGORITHM);
 
         if (withJti) b.setId(UUID.randomUUID().toString());             // jti: 토큰 고유 ID(재사용 방지용)

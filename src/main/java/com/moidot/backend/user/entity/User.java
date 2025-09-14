@@ -74,8 +74,8 @@ public class User {
         this.lastLoginAt = lastLoginAt;
     }
 
-    public String getProviderUserId() {
-        return providerUserId;
+    public Long getId() {
+        return id;
     }
 
     public SocialProvider getProvider() {

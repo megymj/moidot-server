@@ -32,8 +32,7 @@ public class SampleController {
         boolean present = refreshToken != null && !refreshToken.isBlank();
         String masked = present ? mask(refreshToken) : null;
 
-        log.info("Sample Test API Called. refreshToken {}",
-                present ? "present: " + masked : "missing");
+        log.info("Sample Test API Called. refreshToken {}", present ? "present: " + masked : "missing");
 
         // 디버그: 요청에 포함된 모든 쿠키 이름/길이 출력
         if (request.getCookies() != null) {
