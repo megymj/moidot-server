@@ -74,6 +74,10 @@ public class User {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public Long getId() {
         return id;
     }
