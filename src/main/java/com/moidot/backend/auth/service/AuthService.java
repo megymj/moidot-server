@@ -75,55 +75,6 @@ public class AuthService {
         }
     }
 
-    private SocialLoginResponse handleSocialLogin(VerifiedIdentity vi, HttpServletResponse response) {
-        Instant now = Instant.now();
-
-        // 1) 사용자 upsert (provider + providerUserId 기준)
-        User user = userRepository.findUserByProviderUserIdAndProvider(vi.providerUserId(), vi.provider());
-        if (user == null) {
-            // 새로운 사용자 생성
-            user = new User(vi.providerUserId(),
-                    vi.provider(),
-                    vi.email(),
-                    null,
-                    now,
-                    null);
-            log.info("New user created: {}", user.toString());
-        } else {
-            // 이메일이 바뀌었거나 새로 제공되면 갱신
-            if (vi.email() != null && !vi.email().equals(user.getEmail())) {
-                user.setEmail(vi.email());
-            }
-            user.setLastLoginAt(now);
-            log.info("login user {} ", user.toString());
-        }
-        user = userRepository.save(user);   // 신규/갱신 모두 save로 일원화
-
-        // 2) 세션 생성
-        String sid = UUID.randomUUID().toString();
-
-        // 3) 토큰 발급
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), sid);
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), sid);
-
-        // 4) RefreshToken 저장 (현재 스키마 유지)
-        Instant rtExpiresAt = now.plus(jwtUtil.refreshTtlSeconds(), ChronoUnit.SECONDS); // 설정과 동기화
-        RefreshToken dbRt = new RefreshToken(user.getId(), sid, refreshToken, rtExpiresAt, now);
-        refreshTokenRepository.save(dbRt);
-
-        // 5) 응답 구성
-        // 5-1) AT은 응답 헤더에 (프론트에서 읽을 수 있게 expose)
-        response.setHeader("Authorization", "Bearer " + accessToken);
-
-        // 5-2) RT는 HttpOnly 쿠키
-        cookieUtil.addRefreshTokenCookie(response, refreshToken);
-
-        // 민감정보 로그 금지 (token, email 전체 등)
-        log.info("social-login success: provider={}, userId={}, sid={}", user.getProvider(), user.getId(), sid);
-
-        return new SocialLoginResponse(user.getProvider(), user.getEmail());
-    }
-
     public String createRefreshToken(String refreshToken) {
 
         // 1. refreshToken parsing해서 id 정보 가져오기
@@ -134,7 +85,84 @@ public class AuthService {
         // 3. 전달
 
         return null;
-
     }
+
+    // ==========================================================
+    // =                   메인 로직: Social Login                 =
+    // ==========================================================
+    private SocialLoginResponse handleSocialLogin(VerifiedIdentity vi, HttpServletResponse response) {
+        Instant now = Instant.now();
+
+        // 1) 사용자 upsert (provider + providerUserId 기준)
+        User user = upsertUser(vi, now);
+
+        // 2) 세션 생성
+        String sid = generateSessionId();
+
+        // 3) 토큰 발급
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), sid);
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), sid);
+
+        // 4) RefreshToken 저장 (현재 스키마 유지)
+        saveRefreshToken(user.getId(), sid, refreshToken, now);
+
+        // 5) 응답 구성
+        setResponseTokens(response, accessToken, refreshToken);
+
+        // 민감정보 로그 금지 (token, email 전체 등)
+        log.info("social-login success: provider={}, userId={}, sid={}", user.getProvider(), user.getId(), sid);
+
+        return new SocialLoginResponse(user.getProvider(), user.getEmail());
+    }
+
+
+    // ==========================================================
+    // = Social Login Sub Logic: 사용자 생성 / 토큰 발급 등
+    // ==========================================================
+
+    // upsert = update + insert
+    private User upsertUser(VerifiedIdentity vi, Instant now) {
+        User user = userRepository.findUserByProviderUserIdAndProvider(vi.providerUserId(), vi.provider());
+
+        if (user == null) {
+            // 새로운 사용자 생성
+            user = new User(
+                    vi.providerUserId(),
+                    vi.provider(),
+                    vi.email(),
+                    null,
+                    now,
+                    null
+            );
+            log.info("New user created: {}", user);
+        } else {
+            // 이메일이 바뀌었거나 새로 제공되면 갱신
+            if (vi.email() != null && !vi.email().equals(user.getEmail())) {
+                user.setEmail(vi.email());
+            }
+            user.setLastLoginAt(now);
+            log.info("login user {} ", user);
+        }
+
+        return userRepository.save(user);  // 신규/갱신 모두 save로 일원화
+    }
+
+    private String generateSessionId() {
+        return UUID.randomUUID().toString();
+    }
+
+    private void saveRefreshToken(Long userId, String sid, String refreshToken, Instant now) {
+        Instant rtExpiresAt = now.plus(jwtUtil.refreshTtlSeconds(), ChronoUnit.SECONDS);
+        RefreshToken dbRt = new RefreshToken(userId, sid, refreshToken, rtExpiresAt, now);
+        refreshTokenRepository.save(dbRt);
+    }
+
+    private void setResponseTokens(HttpServletResponse response, String accessToken, String refreshToken) {
+        response.setHeader("Authorization", "Bearer " + accessToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
+    }
+
+
+
 
 }
