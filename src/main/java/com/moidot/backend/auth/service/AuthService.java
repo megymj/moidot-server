@@ -10,6 +10,7 @@ import com.moidot.backend.auth.verify.SocialProvider;
 import com.moidot.backend.auth.verify.VerifiedIdentity;
 import com.moidot.backend.user.entity.User;
 import com.moidot.backend.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -169,6 +170,33 @@ public class AuthService {
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
     }
 
+    // ==========================================================
+    // =  Main Logic - Reissue Refresh Token              =
+    // ==========================================================
+    public void reissueRefreshToken(String refreshToken, HttpServletResponse response) {
+        // 1. RT parsing
+        Claims rt = jwtUtil.verifyRefresh(refreshToken);
+        String sid = (String) rt.get("sid");
+
+        // 2. RefreshToken 유효성 검증
+        RefreshToken savedToken = refreshTokenRepository.findRefreshTokenBySessionIdAndToken(sid, refreshToken);
+
+        if (savedToken == null) {
+            // Handle Exception
+            throw new RuntimeException("Refresh token not existed");
+        }
+
+        if (savedToken.getExpiryAt().isBefore(Instant.now())) {
+            throw new RuntimeException("Refresh token expired");
+        }
+
+        Long userId = savedToken.getUserId();
+        String sessionId = savedToken.getSessionId();
+
+        // 3. Refresh Token 재발급
+        String newRT = jwtUtil.generateRefreshToken(userId, sessionId);
+        cookieUtil.addRefreshTokenCookie(response, newRT);
+    }
 
 
 
