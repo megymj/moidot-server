@@ -49,6 +49,9 @@ public class AuthService {
         return handleSocialLogin(verifiedIdentity, response);
     }
 
+    // ==========================================================
+    // =  Main Logic - Verify Social Info               =
+    // ==========================================================
     public VerifiedIdentity verifySocialInfo(SocialLoginRequest request) {
         // 문자열 - enum 반환
         SocialProvider providerEnum = resolveProvider(request.getProvider());
@@ -60,6 +63,10 @@ public class AuthService {
         return v;
     }
 
+
+    // ==========================================================
+    // =        Sub Logic - 문자열을 SocialProvider로 변환        =
+    // ==========================================================
     /**
      * 문자열 입력을 안전하게 SocialProvider로 변환한다.
      * - 대소문자 무시
@@ -88,7 +95,7 @@ public class AuthService {
     }
 
     // ==========================================================
-    // =                   메인 로직: Social Login                 =
+    // =  Main Logic - Social Login                 =
     // ==========================================================
     private SocialLoginResponse handleSocialLogin(VerifiedIdentity vi, HttpServletResponse response) {
         Instant now = Instant.now();
@@ -117,7 +124,7 @@ public class AuthService {
 
 
     // ==========================================================
-    // = Social Login Sub Logic: 사용자 생성 / 토큰 발급 등
+    // = Sub Logic - Social Login : 사용자 생성 / 토큰 발급 등
     // ==========================================================
 
     // upsert = update + insert
