@@ -3,6 +3,8 @@ package com.moidot.backend.auth.controller;
 import com.moidot.backend.auth.dto.SocialLoginRequest;
 import com.moidot.backend.auth.dto.SocialLoginResponse;
 import com.moidot.backend.auth.service.AuthService;
+import com.moidot.backend.global.exception.BusinessException;
+import com.moidot.backend.global.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -34,13 +36,14 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public Object reissueRefreshToken(@CookieValue(value = "m_refreshToken", required = false) String refreshToken,
-                                   HttpServletRequest request,
-                                      HttpServletResponse response) {
+                                                             HttpServletRequest request,
+                                                             HttpServletResponse response) {
 
         if (refreshToken == null || refreshToken.isBlank()) {
             // 프론트에서 로그아웃 처리 필요
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Refresh token is missing.");
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_EXISTED);
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                    .body("Refresh token is missing.");
         }
 
         try {
