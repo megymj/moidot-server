@@ -8,9 +8,21 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
-    // auth
+    // ========================
+    // Common
+    // ========================
+    INTERNAL_SERVER_ERROR("COMMON_500_01", HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
 
-    REFRESH_TOKEN_NOT_EXISTED("A4013", HttpStatus.UNAUTHORIZED,"프론트에서 넘어온 Cookie에 m_refreshToken 값이 존재하지 않습니다");
+
+    // ========================
+    // Auth
+    // ========================
+    REFRESH_TOKEN_MISSING("AUTH_401_01", HttpStatus.UNAUTHORIZED, "Refresh Token이 존재하지 않습니다."),
+    INVALID_JWT_TOKEN("AUTH_401_02", HttpStatus.UNAUTHORIZED, "유효하지 않은 JWT Refresh 토큰입니다."),
+    REFRESH_TOKEN_EXPIRED("AUTH_401_03", HttpStatus.UNAUTHORIZED, "Refresh Token이 만료되었습니다."),
+    REFRESH_TOKEN_NOT_FOUND("AUTH_401_04", HttpStatus.UNAUTHORIZED, "서버에 Refresh Token 정보가 존재하지 않습니다."),
+    PROVIDER_NOT_SUPPORTED("AUTH_400_01", HttpStatus.BAD_REQUEST, "지원하지 않는 Provider입니다.");
+
 
 
 

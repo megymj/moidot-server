@@ -3,10 +3,10 @@ package com.moidot.backend.auth.service;
 import com.moidot.backend.auth.verify.SocialProvider;
 import com.moidot.backend.auth.verify.SocialVerifier;
 import com.moidot.backend.auth.verify.VerifiedIdentity;
+import com.moidot.backend.global.exception.BusinessException;
+import com.moidot.backend.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class SocialVerifyService {
         SocialVerifier v = byProvider.get(provider);
         if (v == null) {
             log.warn("Unsupported provider requested: {}", provider);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported provider: " + provider);
+            throw new BusinessException(ErrorCode.PROVIDER_NOT_SUPPORTED);
         }
         return v.verify(accessToken);
     }

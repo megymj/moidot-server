@@ -59,8 +59,11 @@ public class RefreshToken {
         this.createdAt = createdAt;
     }
 
-    public boolean isExpired() {
-        return expiryAt.isBefore(Instant.now());
+    // ========================
+    // = Update Method
+    // ========================
+    public void updateToken(String newToken, Instant newExpiryAt) {
+        this.token = newToken;
+        this.expiryAt = newExpiryAt;
     }
-
 }

@@ -8,9 +8,13 @@ import com.moidot.backend.auth.util.CookieUtil;
 import com.moidot.backend.auth.util.JwtUtil;
 import com.moidot.backend.auth.verify.SocialProvider;
 import com.moidot.backend.auth.verify.VerifiedIdentity;
+import com.moidot.backend.global.exception.BusinessException;
+import com.moidot.backend.global.exception.ErrorCode;
 import com.moidot.backend.user.entity.User;
 import com.moidot.backend.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -173,29 +177,47 @@ public class AuthService {
     // ==========================================================
     // =  Main Logic - Reissue Refresh Token              =
     // ==========================================================
-    public void reissueRefreshToken(String refreshToken, HttpServletResponse response) {
+    public boolean reissueRefreshToken(String refreshToken, HttpServletResponse response) {
+        Instant now = Instant.now();
+
         // 1. RT parsing
-        Claims rt = jwtUtil.verifyRefresh(refreshToken);
+        Claims rt;
+        try {
+            rt = jwtUtil.verifyRefresh(refreshToken);
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+        } catch (JwtException e) {
+            throw new BusinessException(ErrorCode.INVALID_JWT_TOKEN);
+        }
+
+        Long userId = Long.valueOf(rt.getSubject());
         String sid = (String) rt.get("sid");
 
-        // 2. RefreshToken 유효성 검증
+        // 1) DB 조회
         RefreshToken savedToken = refreshTokenRepository.findRefreshTokenBySessionIdAndToken(sid, refreshToken);
-
         if (savedToken == null) {
             // Handle Exception
-            throw new RuntimeException("Refresh token not existed");
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
-        if (savedToken.getExpiryAt().isBefore(Instant.now())) {
-            throw new RuntimeException("Refresh token expired");
+        // 2) 새 Access Token 발급
+        String newAccessToken = jwtUtil.generateAccessToken(userId, sid);
+        response.setHeader("Authorization", "Bearer " + newAccessToken);
+
+        // 3) Refresh Token 만료 임박 여부 확인 후 갱신
+        boolean refreshNearExpiry = savedToken.getExpiryAt().isBefore(now.plusSeconds(60 * 60 * 24)); // 1일 이내
+        if (refreshNearExpiry) {
+            String newRefreshToken = jwtUtil.generateRefreshToken(userId, sid);
+            Instant newExpiry = now.plusSeconds(jwtUtil.refreshTtlSeconds());
+
+            // RT 갱신
+            savedToken.updateToken(newRefreshToken, newExpiry);
+            refreshTokenRepository.save(savedToken);
+
+            cookieUtil.addRefreshTokenCookie(response, newRefreshToken);
         }
 
-        Long userId = savedToken.getUserId();
-        String sessionId = savedToken.getSessionId();
-
-        // 3. Refresh Token 재발급
-        String newRT = jwtUtil.generateRefreshToken(userId, sessionId);
-        cookieUtil.addRefreshTokenCookie(response, newRT);
+        return true;
     }
 
 
