@@ -17,8 +17,8 @@ public class GlobalExceptionHandler {
         ErrorCode code = ex.getErrorCode();
 
         ErrorResponse response = new ErrorResponse(
-                code.getStatus().value(),
                 code.getCode(),
+                code.getStatus().value(),
                 code.getMessage(),
                 request.getRequestURI(),     // 현재 요청의 path (동적으로 주입)
                 Instant.now()                // 시간 (동적으로 주입)
