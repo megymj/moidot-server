@@ -5,8 +5,6 @@ import com.moidot.backend.auth.dto.SocialLoginResponse;
 import com.moidot.backend.auth.service.AuthService;
 import com.moidot.backend.global.exception.BusinessException;
 import com.moidot.backend.global.exception.ErrorCode;
-import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

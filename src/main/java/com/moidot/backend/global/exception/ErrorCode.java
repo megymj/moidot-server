@@ -28,7 +28,7 @@ public enum ErrorCode {
 
 
     /**
-     * 프론트로 전달되는 에러 코드 (예: 4011, 4012 등)
+     * 프론트로 전달되는 에러 코드 (예: AUTH_401_01, AUTH_401_02 등)
      */
     private final String code;
 
